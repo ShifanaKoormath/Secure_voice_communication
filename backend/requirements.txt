@@ -1,18 +1,27 @@
+# --- Core API ---
 fastapi
 uvicorn
-cryptography
-pydantic
 python-multipart
+pydantic
+cryptography
 
-# Speech-to-text
+# --- Speech-to-text ---
 openai-whisper
 torch
+torchaudio
 
-# NLP
-transformers
-scikit-learn
-
-
+# --- Audio processing ---
 librosa
 soundfile
 numpy
+scipy
+noisereduce
+soxr
+
+# --- NLP ---
+transformers
+scikit-learn
+
+# --- Utilities / runtime ---
+requests
+tqdm

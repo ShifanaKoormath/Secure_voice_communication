@@ -14,7 +14,7 @@ class ChatListActivity : AppCompatActivity() {
 
         val currentUser = getSharedPreferences("prefs", MODE_PRIVATE)
             .getString("current_user", null)
-            ?: return  // hard fail if not logged in (correct)
+            ?: return
 
         // 🔒 Deterministic demo users
         val contacts = when (currentUser) {
