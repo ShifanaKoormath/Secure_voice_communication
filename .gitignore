@@ -1,15 +1,27 @@
+# ---------- Android ----------
 *.iml
-.gradle
-/local.properties
-/.idea/caches
-/.idea/libraries
-/.idea/modules.xml
-/.idea/workspace.xml
-/.idea/navEditor.xml
-/.idea/assetWizardSettings.xml
-.DS_Store
-/build
+.gradle/
+build/
+*/build/
+local.properties
 /captures
 .externalNativeBuild
 .cxx
-local.properties
+
+# Android Studio / IntelliJ
+.idea/
+.idea/*
+!.idea/.gitignore
+
+# macOS
+.DS_Store
+
+# ---------- Python / Backend ----------
+backend/venv/
+venv/
+__pycache__/
+*.pyc
+
+# ---------- Backend Runtime / Sensitive ----------
+backend/storage/
+backend/server_private.key
