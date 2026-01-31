@@ -188,26 +188,61 @@ class ChatActivity : AppCompatActivity() {
 
     // ---------------- PLAY VOICE ----------------
 
-    private fun fetchAndPlayEnhancedAudio(messageId: String) {
-        CoroutineScope(Dispatchers.IO).launch {
-            val file = File(cacheDir, "enhanced_$messageId.wav")
-            val conn = URL("$backendBase/enhance/$messageId").openConnection() as HttpURLConnection
+private fun fetchAndPlayEnhancedAudio(messageId: String) {
+    CoroutineScope(Dispatchers.IO).launch {
+        val file = File(cacheDir, "enhanced_$messageId.wav")
+        val conn = URL("$backendBase/enhance/$messageId")
+            .openConnection() as HttpURLConnection
 
-            conn.inputStream.use { input ->
-                FileOutputStream(file).use { input.copyTo(it) }
-            }
-
-            conn.disconnect()
-
-            withContext(Dispatchers.Main) {
-                val player = MediaPlayer()
-                player.setDataSource(file.absolutePath)
-                player.prepare()
-                player.start()
-                player.setOnCompletionListener { player.release() }
+        conn.inputStream.use { input ->
+            FileOutputStream(file).use { output ->
+                input.copyTo(output)
             }
         }
+
+        conn.disconnect()
+
+        Log.d("VOICE_DEBUG", "Enhanced file size = ${file.length()} bytes")
+
+        // ✅ ONLY AudioTrack playback – NO MediaPlayer
+        playWavWithAudioTrack(file)
     }
+}
+
+private fun playWavWithAudioTrack(file: File) {
+    Thread {
+        try {
+            val input = FileInputStream(file)
+            input.skip(44) // WAV header
+
+            val buffer = ByteArray(4096)
+            val audioTrack = android.media.AudioTrack(
+                android.media.AudioManager.STREAM_MUSIC,
+                16000,
+                android.media.AudioFormat.CHANNEL_OUT_MONO,
+                android.media.AudioFormat.ENCODING_PCM_16BIT,
+                4096,
+                android.media.AudioTrack.MODE_STREAM
+            )
+
+            audioTrack.play()
+
+            var read: Int
+            while (input.read(buffer).also { read = it } > 0) {
+                audioTrack.write(buffer, 0, read)
+            }
+
+            audioTrack.stop()
+            audioTrack.release()
+            input.close()
+
+        } catch (e: Exception) {
+            Log.e("VOICE_PLAY", "AudioTrack playback failed", e)
+        }
+    }.start()
+}
+
+
 
     // ---------------- TEXT ----------------
 
@@ -320,6 +355,7 @@ class ChatActivity : AppCompatActivity() {
             } else stopRecording()
         }
     }
+
 
     override fun onRequestPermissionsResult(
         requestCode: Int,

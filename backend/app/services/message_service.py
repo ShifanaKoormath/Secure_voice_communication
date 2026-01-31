@@ -9,7 +9,14 @@ STORAGE_AUDIO = BASE_DIR / "storage" / "encrypted_audio"
 STORAGE_META = BASE_DIR / "storage" / "metadata"
 
 
-def save_message(sender: str, nonce: bytes, ciphertext: bytes, aes_key: bytes):
+def save_message(
+    sender: str,
+    receiver: str,
+    nonce: bytes,
+    ciphertext: bytes,
+    aes_key: bytes
+):
+
     message_id = str(uuid.uuid4())
 
     # Save encrypted audio
@@ -19,12 +26,16 @@ def save_message(sender: str, nonce: bytes, ciphertext: bytes, aes_key: bytes):
 
     # Save metadata + AES key (base64)
     metadata = {
-        "message_id": message_id,
-        "sender": sender,
-        "timestamp": datetime.utcnow().isoformat(),
-        "status": "PENDING",
-        "aes_key": base64.b64encode(aes_key).decode()
-    }
+    "message_id": message_id,
+    "sender": sender,
+    "receiver": receiver,
+    "type": "VOICE",
+    "content": "",
+    "timestamp": datetime.utcnow().isoformat(),
+    "status": "DELIVERED",
+    "aes_key": base64.b64encode(aes_key).decode()
+}
+
 
     meta_path = STORAGE_META / f"{message_id}.json"
     with open(meta_path, "w") as f:

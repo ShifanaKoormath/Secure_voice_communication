@@ -38,7 +38,7 @@ def enhance_audio(audio_bytes: bytes) -> bytes:
 
     # Save enhanced audio
     with tempfile.NamedTemporaryFile(delete=False, suffix=".wav") as out:
-        sf.write(out.name, reduced_noise, sr)
+        sf.write(out.name, reduced_noise, sr, subtype="PCM_16")
         output_path = out.name
 
     # Read enhanced bytes

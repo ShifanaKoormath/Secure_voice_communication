@@ -58,12 +58,16 @@ async def send_voice(
     nonce, ciphertext = encrypt_audio(aes_key, audio_bytes)
 
     # 📦 Store encrypted message
+
+
     metadata = save_message(
         sender=sender,
+        receiver=receiver,
         nonce=nonce,
         ciphertext=ciphertext,
         aes_key=aes_key
     )
+
 
     return {
         "message": "Voice message stored securely",
@@ -117,16 +121,17 @@ def get_enhanced_audio(message_id: str):
     enhanced_audio = enhance_audio(audio_bytes)
 
     # Save enhanced audio to temp file
-    with tempfile.NamedTemporaryFile(delete=False, suffix=".wav") as tmp:
-        tmp.write(enhanced_audio)
-        temp_path = tmp.name
+    enhanced_path = STORAGE_AUDIO / f"{message_id}_enhanced.wav"
 
-    # Return audio file
+    with open(enhanced_path, "wb") as f:
+        f.write(enhanced_audio)
+
     return FileResponse(
-        path=temp_path,
+        path=enhanced_path,
         media_type="audio/wav",
         filename=f"{message_id}_enhanced.wav"
     )
+
 
 # -----------------------------
 # Decrypt → Enhance → Transcribe → Classify
