@@ -4,5 +4,6 @@ data class ChatMessage(
     val messageId: String,
     val sender: String,
     val content: String,
-    val type: String // "TEXT" or "VOICE"
+    val type: String,
+    val timestamp: String
 )

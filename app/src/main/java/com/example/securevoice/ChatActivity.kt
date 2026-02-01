@@ -4,14 +4,19 @@ import android.Manifest
 import android.content.pm.PackageManager
 import android.media.AudioFormat
 import android.media.AudioRecord
+import android.media.AudioTrack
 import android.media.MediaRecorder
-import android.media.MediaPlayer
 import android.os.Bundle
 import android.util.Log
-import android.widget.*
+import android.widget.EditText
+import android.widget.ImageButton
+import android.widget.TextView
+import android.widget.Toast
 import androidx.appcompat.app.AppCompatActivity
 import androidx.core.app.ActivityCompat
 import androidx.core.content.ContextCompat
+import androidx.recyclerview.widget.LinearLayoutManager
+import androidx.recyclerview.widget.RecyclerView
 import kotlinx.coroutines.*
 import org.json.JSONArray
 import java.io.*
@@ -23,16 +28,24 @@ import java.nio.ByteOrder
 
 class ChatActivity : AppCompatActivity() {
 
-    private val messages = mutableListOf<ChatMessage>()
-    private lateinit var adapter: ArrayAdapter<String>
+    // ---------- UI ----------
+    private lateinit var recycler: RecyclerView
+    private lateinit var adapter: ChatAdapter
 
+    // ---------- DATA ----------
+    private val messages = mutableListOf<ChatMessage>()
+
+    // ---------- AUDIO ----------
     private var isRecording = false
     private var audioRecord: AudioRecord? = null
     private lateinit var audioFile: File
 
+    // ---------- CONFIG ----------
     private val backendBase = "http://10.0.2.2:8000/api"
 
-    // ---------------- PERMISSION ----------------
+    // =====================================================
+    // PERMISSION
+    // =====================================================
 
     private fun ensureMicPermission(): Boolean {
         return if (
@@ -50,22 +63,23 @@ class ChatActivity : AppCompatActivity() {
         } else true
     }
 
-    // ---------------- RECORDING ----------------
+    // =====================================================
+    // RECORDING
+    // =====================================================
 
     private fun startRecording() {
         val sampleRate = 16000
-        val channelConfig = AudioFormat.CHANNEL_IN_MONO
-        val audioFormat = AudioFormat.ENCODING_PCM_16BIT
-
         val bufferSize = AudioRecord.getMinBufferSize(
-            sampleRate, channelConfig, audioFormat
+            sampleRate,
+            AudioFormat.CHANNEL_IN_MONO,
+            AudioFormat.ENCODING_PCM_16BIT
         )
 
         audioRecord = AudioRecord(
             MediaRecorder.AudioSource.MIC,
             sampleRate,
-            channelConfig,
-            audioFormat,
+            AudioFormat.CHANNEL_IN_MONO,
+            AudioFormat.ENCODING_PCM_16BIT,
             bufferSize
         )
 
@@ -105,7 +119,9 @@ class ChatActivity : AppCompatActivity() {
         sendVoiceToBackend(sender, receiver, audioFile)
     }
 
-    // ---------------- WAV ----------------
+    // =====================================================
+    // WAV HELPERS
+    // =====================================================
 
     private fun writeWavHeader(out: FileOutputStream) {
         out.write(ByteArray(44))
@@ -134,13 +150,11 @@ class ChatActivity : AppCompatActivity() {
         }
     }
 
-    // ---------------- SEND VOICE ----------------
+    // =====================================================
+    // SEND VOICE
+    // =====================================================
 
-    private fun sendVoiceToBackend(
-        sender: String,
-        receiver: String,
-        audioFile: File
-    ) {
+    private fun sendVoiceToBackend(sender: String, receiver: String, audioFile: File) {
         CoroutineScope(Dispatchers.IO).launch {
             try {
                 val boundary = "Boundary-${System.currentTimeMillis()}"
@@ -186,65 +200,69 @@ class ChatActivity : AppCompatActivity() {
         }
     }
 
-    // ---------------- PLAY VOICE ----------------
+    // =====================================================
+    // PLAY VOICE (AudioTrack)
+    // =====================================================
 
-private fun fetchAndPlayEnhancedAudio(messageId: String) {
-    CoroutineScope(Dispatchers.IO).launch {
-        val file = File(cacheDir, "enhanced_$messageId.wav")
-        val conn = URL("$backendBase/enhance/$messageId")
-            .openConnection() as HttpURLConnection
+    private fun fetchAndPlayEnhancedAudio(messageId: String) {
+        CoroutineScope(Dispatchers.IO).launch {
+            val file = File(cacheDir, "enhanced_$messageId.wav")
+            val conn = URL("$backendBase/enhance/$messageId")
+                .openConnection() as HttpURLConnection
 
-        conn.inputStream.use { input ->
-            FileOutputStream(file).use { output ->
-                input.copyTo(output)
+            conn.inputStream.use { input ->
+                FileOutputStream(file).use { output ->
+                    input.copyTo(output)
+                }
             }
+
+            conn.disconnect()
+
+            Log.d("VOICE_DEBUG", "Enhanced file size = ${file.length()} bytes")
+
+            playWavWithAudioTrack(file)
         }
-
-        conn.disconnect()
-
-        Log.d("VOICE_DEBUG", "Enhanced file size = ${file.length()} bytes")
-
-        // ✅ ONLY AudioTrack playback – NO MediaPlayer
-        playWavWithAudioTrack(file)
     }
-}
 
-private fun playWavWithAudioTrack(file: File) {
-    Thread {
-        try {
-            val input = FileInputStream(file)
-            input.skip(44) // WAV header
+    private fun playWavWithAudioTrack(file: File) {
+        Thread {
+            try {
+                val input = FileInputStream(file)
+                input.skip(44)
 
-            val buffer = ByteArray(4096)
-            val audioTrack = android.media.AudioTrack(
-                android.media.AudioManager.STREAM_MUSIC,
-                16000,
-                android.media.AudioFormat.CHANNEL_OUT_MONO,
-                android.media.AudioFormat.ENCODING_PCM_16BIT,
-                4096,
-                android.media.AudioTrack.MODE_STREAM
-            )
+                val buffer = ByteArray(4096)
+                val audioTrack = AudioTrack(
+                    android.media.AudioManager.STREAM_MUSIC,
+                    16000,
+                    AudioFormat.CHANNEL_OUT_MONO,
+                    AudioFormat.ENCODING_PCM_16BIT,
+                    4096,
+                    AudioTrack.MODE_STREAM
+                )
 
-            audioTrack.play()
+                audioTrack.play()
 
-            var read: Int
-            while (input.read(buffer).also { read = it } > 0) {
-                audioTrack.write(buffer, 0, read)
+                var read: Int
+                while (input.read(buffer).also { read = it } > 0) {
+                    audioTrack.write(buffer, 0, read)
+                }
+
+                audioTrack.stop()
+                audioTrack.release()
+                input.close()
+
+             runOnUiThread {
+                adapter.clearPlaying()
             }
+            } catch (e: Exception) {
+                Log.e("VOICE_PLAY", "AudioTrack playback failed", e)
+            }
+        }.start()
+    }
 
-            audioTrack.stop()
-            audioTrack.release()
-            input.close()
-
-        } catch (e: Exception) {
-            Log.e("VOICE_PLAY", "AudioTrack playback failed", e)
-        }
-    }.start()
-}
-
-
-
-    // ---------------- TEXT ----------------
+    // =====================================================
+    // SEND TEXT
+    // =====================================================
 
     private fun sendText(sender: String, receiver: String, text: String) {
         CoroutineScope(Dispatchers.IO).launch {
@@ -267,57 +285,82 @@ private fun playWavWithAudioTrack(file: File) {
         }
     }
 
-    // ---------------- LOAD ----------------
+    // =====================================================
+    // LOAD MESSAGES (ORDERED)
+    // =====================================================
 
-    private fun loadMessages(currentUser: String) {
-        val contact = intent.getStringExtra("contact") ?: return
+private fun loadMessages(currentUser: String) {
+    val contact = intent.getStringExtra("contact") ?: return
 
-        CoroutineScope(Dispatchers.IO).launch {
-    val response = URL(
-        "$backendBase/messages/${URLEncoder.encode(currentUser, "UTF-8")}"
-    ).readText()
+    CoroutineScope(Dispatchers.IO).launch {
+        val response = URL(
+            "$backendBase/messages/${URLEncoder.encode(currentUser, "UTF-8")}"
+        ).readText()
 
-    val json = JSONArray(response)
+        val json = JSONArray(response)
 
-    withContext(Dispatchers.Main) {
-        messages.clear()
+        withContext(Dispatchers.Main) {
+            messages.clear()
 
-        for (i in 0 until json.length()) {
-            val msg = json.getJSONObject(i)
-            val sender = msg.getString("sender")
-            val receiver = msg.optString("receiver", "")
+            val temp = mutableListOf<ChatMessage>()
 
-            if (
-                (sender == currentUser && receiver == contact) ||
-                (sender == contact && receiver == currentUser)
-            ) {
-                messages.add(
-                    ChatMessage(
-                        msg.getString("message_id"),
-                        sender,
-                        msg.optString("content", ""),
-                        msg.optString("type", "VOICE")
+            // 1️⃣ Collect messages
+            for (i in 0 until json.length()) {
+                val msg = json.getJSONObject(i)
+                val sender = msg.getString("sender")
+                val receiver = msg.optString("receiver", "")
+
+                if (
+                    (sender == currentUser && receiver == contact) ||
+                    (sender == contact && receiver == currentUser)
+                ) {
+                    temp.add(
+                        ChatMessage(
+                            messageId = msg.getString("message_id"),
+                            sender = sender,
+                            content = msg.optString("content", ""),
+                            type = msg.optString("type", "VOICE"),
+                            timestamp = msg.getString("timestamp")
+                        )
                     )
-                )
+                }
             }
-        }
 
-        adapter.clear()
-        adapter.addAll(
-            messages.map {
-                if (it.type == "VOICE")
-                    "🎤 Voice message – tap to play"
-                else
-                    "${it.sender}: ${it.content}"
+            // 2️⃣ SORT ONCE (IMPORTANT)
+            temp.sortBy { it.timestamp }
+
+            // 3️⃣ INSERT DATE SEPARATORS
+            var lastDate: String? = null
+
+            for (msg in temp) {
+                val date = msg.timestamp.substring(0, 10) // yyyy-mm-dd
+
+                if (date != lastDate) {
+                    messages.add(
+                        ChatMessage(
+                            messageId = "date_$date",
+                            sender = "",
+                            content = formatDateLabel(date),
+                            type = "DATE",
+                            timestamp = msg.timestamp
+                        )
+                    )
+                    lastDate = date
+                }
+
+                messages.add(msg)
             }
-        )
-        adapter.notifyDataSetChanged()
+
+            adapter.notifyDataSetChanged()
+            recycler.scrollToPosition(messages.size - 1)
+        }
     }
 }
 
-    }
 
-    // ---------------- UI ----------------
+    // =====================================================
+    // UI
+    // =====================================================
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -329,22 +372,26 @@ private fun playWavWithAudioTrack(file: File) {
 
         findViewById<TextView>(R.id.chatTitle).text = contact
 
-        val listView = findViewById<ListView>(R.id.messageList)
-        adapter = ArrayAdapter(this, android.R.layout.simple_list_item_1, mutableListOf())
-        listView.adapter = adapter
+        recycler = findViewById(R.id.messageList)
+        recycler.layoutManager = LinearLayoutManager(this).apply {
+            stackFromEnd = true
+        }
 
-        listView.setOnItemClickListener { _, _, pos, _ ->
-            val msg = messages[pos]
+        adapter = ChatAdapter(currentUser, messages) { msg ->
             if (msg.type == "VOICE") {
-                fetchAndPlayEnhancedAudio(msg.messageId!!)
+                fetchAndPlayEnhancedAudio(msg.messageId)
             }
         }
+
+        recycler.adapter = adapter
 
         loadMessages(currentUser)
 
         findViewById<ImageButton>(R.id.sendBtn).setOnClickListener {
-            val text = findViewById<EditText>(R.id.messageInput).text.toString()
-            if (text.isNotBlank()) {
+            val input = findViewById<EditText>(R.id.messageInput)
+            val text = input.text.toString().trim()
+            if (text.isNotEmpty()) {
+                input.setText("")
                 sendText(currentUser, contact, text)
             }
         }
@@ -355,7 +402,6 @@ private fun playWavWithAudioTrack(file: File) {
             } else stopRecording()
         }
     }
-
 
     override fun onRequestPermissionsResult(
         requestCode: Int,
@@ -370,4 +416,16 @@ private fun playWavWithAudioTrack(file: File) {
             startRecording()
         }
     }
+
+    private fun formatDateLabel(date: String): String {
+    val today = java.time.LocalDate.now()
+    val msgDate = java.time.LocalDate.parse(date)
+
+    return when {
+        msgDate == today -> "Today"
+        msgDate == today.minusDays(1) -> "Yesterday"
+        else -> msgDate.toString()
+    }
+}
+
 }
