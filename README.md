@@ -129,13 +129,21 @@ Secure_AI_Based_Voice_Communication/
 * Internet connection (for first-time dependency installs)
 
 ---
+✅Clone the Repository
+git clone https://github.com/ShifanaKoormath/Secure_voice_communication.git
+
+
+This will create a folder:
+
+SECUREVOICECHAT
+
 
 ## ▶️ Backend Setup
 
 ### Step 1 — Navigate to backend
 
 ```bash
-cd backend
+cd SecureVoiceChat\backend
 ```
 
 ### Step 2 — Create & activate virtual environment
