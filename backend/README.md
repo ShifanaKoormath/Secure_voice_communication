@@ -2,15 +2,15 @@
 
 
 ✅ STEP 1 — Clone the Repository
-git clone https://github.com/ShifanaKoormath/Secure-AI-Based-Voice-Communication.git
+git clone https://github.com/ShifanaKoormath/Secure_voice_communication.git
 
 
 This will create a folder:
 
-Secure-AI-Based-Voice-Communication
+SECUREVOICECHAT
 
 ✅ STEP 2 — Navigate to the Backend Folder
-cd Secure-AI-Based-Voice-Communication\backend
+cd SecureVoiceChat\backend
 
 ✅ STEP 3 — Create and Activate Python Virtual Environment
 python -m venv venv
@@ -51,14 +51,6 @@ Whisper & Torch
 Transformers & scikit-learn
 
 
-(updated requirements installation:
-
-pip install torch torchaudio soundfile numpy scipy
-
-
-
-
-)
 
 
 
@@ -117,7 +109,7 @@ http://127.0.0.1:8001/docs
 
 Before running the server:
 
-✔ You are in Secure-AI-Based-Voice-Communication\backend
+✔ You are in SecureVoiceChat\backend
 ✔ (venv) is active
 ✔ Dependencies installed
 ✔ No errors during install
