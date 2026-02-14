@@ -2,8 +2,10 @@ package com.example.securevoice
 
 import android.content.Intent
 import android.os.Bundle
-import androidx.appcompat.app.AppCompatActivity
 import android.widget.Button
+import android.widget.EditText
+import android.widget.Toast
+import androidx.appcompat.app.AppCompatActivity
 
 class UserSelectActivity : AppCompatActivity() {
 
@@ -11,12 +13,27 @@ class UserSelectActivity : AppCompatActivity() {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_user_select)
 
-        findViewById<Button>(R.id.btnUserA).setOnClickListener {
-saveUser("UserA")
-        }
+        val etUsername = findViewById<EditText>(R.id.etUsername)
+        val etPassword = findViewById<EditText>(R.id.etPassword)
+        val btnLogin = findViewById<Button>(R.id.btnLogin)
 
-        findViewById<Button>(R.id.btnUserB).setOnClickListener {
-            saveUser("UserB")
+        btnLogin.setOnClickListener {
+            val username = etUsername.text.toString().trim()
+            val password = etPassword.text.toString().trim()
+
+            when {
+                username == "userA" && password == "1234" -> {
+                    saveUser("UserA")
+                }
+
+                username == "userB" && password == "1234" -> {
+                    saveUser("UserB")
+                }
+
+                else -> {
+                    Toast.makeText(this, "Invalid credentials", Toast.LENGTH_SHORT).show()
+                }
+            }
         }
     }
 

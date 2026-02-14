@@ -1,45 +1,68 @@
 <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
     android:orientation="vertical"
     android:layout_width="match_parent"
-    android:layout_height="match_parent">
+    android:layout_height="match_parent"
+    android:background="#ECE5DD">
 
-    <TextView
-        android:id="@+id/chatTitle"
-        android:text="Chat"
-        android:textSize="18sp"
-        android:padding="12dp"
+    <!-- Header -->
+    <LinearLayout
         android:layout_width="match_parent"
-        android:layout_height="wrap_content"/>
+        android:layout_height="56dp"
+        android:background="#075E54"
+        android:gravity="center_vertical"
+        android:paddingHorizontal="14dp">
 
-  <androidx.recyclerview.widget.RecyclerView
-    android:id="@+id/messageList"
-    android:layout_width="match_parent"
-    android:layout_height="0dp"
-    android:layout_weight="1"
-    android:padding="8dp"
-    android:clipToPadding="false"/>
+        <TextView
+            android:id="@+id/chatTitle"
+            android:text="UserB"
+            android:textColor="#FFFFFF"
+            android:textSize="18sp"
+            android:textStyle="bold"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"/>
+    </LinearLayout>
 
+    <!-- Messages -->
+    <androidx.recyclerview.widget.RecyclerView
+        android:id="@+id/messageList"
+        android:layout_width="match_parent"
+        android:layout_height="0dp"
+        android:layout_weight="1"
+        android:padding="10dp"
+        android:clipToPadding="false"/>
+
+    <!-- Bottom Bar -->
     <LinearLayout
         android:orientation="horizontal"
+        android:background="#FFFFFF"
+        android:padding="8dp"
         android:layout_width="match_parent"
-        android:layout_height="wrap_content">
+        android:layout_height="wrap_content"
+        android:gravity="center_vertical">
 
         <EditText
             android:id="@+id/messageInput"
+            android:hint="Type message..."
             android:layout_weight="1"
             android:layout_width="0dp"
-            android:layout_height="wrap_content"/>
+            android:layout_height="40dp"
+            android:paddingHorizontal="10dp"/>
 
         <ImageButton
             android:id="@+id/sendBtn"
             android:src="@android:drawable/ic_menu_send"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"/>
+            android:backgroundTint="#25D366"
+            android:layout_width="40dp"
+            android:layout_height="40dp"
+            android:layout_marginStart="6dp"/>
 
         <ImageButton
             android:id="@+id/micBtn"
             android:src="@android:drawable/ic_btn_speak_now"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"/>
+            android:backgroundTint="#25D366"
+            android:layout_width="40dp"
+            android:layout_height="40dp"
+            android:layout_marginStart="4dp"/>
     </LinearLayout>
+
 </LinearLayout>

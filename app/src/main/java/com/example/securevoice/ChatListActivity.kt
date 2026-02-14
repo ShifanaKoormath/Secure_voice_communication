@@ -24,8 +24,8 @@ class ChatListActivity : AppCompatActivity() {
         }
 
         val listView = findViewById<ListView>(R.id.chatList)
-        listView.adapter =
-            ArrayAdapter(this, android.R.layout.simple_list_item_1, contacts)
+        listView.adapter = ChatListAdapter(this, contacts)
+
 
         listView.setOnItemClickListener { _, _, position, _ ->
             val intent = Intent(this, ChatActivity::class.java)

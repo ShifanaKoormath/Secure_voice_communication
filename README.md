@@ -168,11 +168,6 @@ Make sure `(venv)` appears in the terminal.
 pip install -r requirements.txt
 ```
 
-Additional AI dependencies (if needed):
-
-```bash
-pip install torch torchaudio soundfile numpy scipy
-```
 
 ---
 
@@ -234,15 +229,42 @@ This is already configured in the frontend code.
 
 ---
 
-## 🧪 Demo Flow (Recommended for Evaluation)
+🧪 Demo Flow — Phase 1 (UI + Basic Messaging)
+🔹 Login & User Switching
 
-### 🔹 Text Messaging
+Open the app → Login screen appears
 
-1. Select **User A**
-2. Open chat with **User B**
-3. Send a text message
-4. Switch to **User B**
-5. Message appears
+Login as User A (userA / 1234)
+
+Chat list opens → shows User B as the contact
+
+🔹 Text Messaging
+
+Open chat with User B
+
+Type a message → tap Send
+
+Message appears on the right side (User A bubble)
+
+🔹 Switch User (Simulated Two-User Demo)
+
+Go back → return to Login screen
+
+Login as User B (userB / 1234)
+
+Open chat with User A
+
+Previously sent message appears on the left side (received bubble)
+
+What this demonstrates
+
+Two-user interaction in a single device (simulated clients)
+
+Chat UI with sender/receiver separation
+
+Message persistence within session
+
+Realistic messaging workflow for demo
 
 ---
 
