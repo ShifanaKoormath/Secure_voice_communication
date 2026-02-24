@@ -22,14 +22,10 @@ class UserSelectActivity : AppCompatActivity() {
             val password = etPassword.text.toString().trim()
 
             when {
-                username == "userA" && password == "1234" -> {
-                    saveUser("UserA")
-                }
-
-                username == "userB" && password == "1234" -> {
-                    saveUser("UserB")
-                }
-
+                username == "userA" && password == "1234" -> saveUser("UserA")
+                username == "userB" && password == "1234" -> saveUser("UserB")
+                username == "userC" && password == "1234" -> saveUser("UserC")
+                username == "userD" && password == "1234" -> saveUser("UserD")
                 else -> {
                     Toast.makeText(this, "Invalid credentials", Toast.LENGTH_SHORT).show()
                 }

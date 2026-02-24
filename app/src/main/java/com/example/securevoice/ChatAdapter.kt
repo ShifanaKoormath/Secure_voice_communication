@@ -9,13 +9,12 @@ import android.widget.LinearLayout
 import android.widget.TextView
 import androidx.core.content.ContextCompat
 import androidx.recyclerview.widget.RecyclerView
-
+var urgentUsers: Set<String> = emptySet()
 class ChatAdapter(
     private val currentUser: String,
     private val messages: List<ChatMessage>,
     private val onVoiceClick: (ChatMessage) -> Unit
 ) : RecyclerView.Adapter<ChatAdapter.ChatViewHolder>() {
-
     // ✅ MUST be INSIDE the class
     private var playingMessageId: String? = null
 
@@ -52,14 +51,18 @@ holder.text.textSize = 12f
         }
 
         // 🟢 TEXT / VOICE
-        holder.text.text = when {
-            msg.type == "VOICE" && msg.messageId == playingMessageId ->
-                "🎤 Playing..."
-            msg.type == "VOICE" ->
-                "🎤 Voice message"
-            else ->
-                msg.content
-        }
+      val baseText = when {
+    msg.type == "VOICE" && msg.messageId == playingMessageId ->
+        "🎤 Playing..."
+    msg.type == "VOICE" ->
+        "🎤 Voice message"
+    else ->
+        msg.content
+}
+
+holder.text.text = baseText
+
+
         holder.text.setTextColor(
     if (isMe)
         Color.parseColor("#4B2E83")  // deep purple
@@ -73,11 +76,27 @@ holder.text.textSize = 12f
         params.gravity = if (isMe) Gravity.END else Gravity.START
         holder.bubble.layoutParams = params
 
-        holder.bubble.background = ContextCompat.getDrawable(
-            holder.itemView.context,
-            if (isMe) R.drawable.bg_message_right
-            else R.drawable.bg_message_left
-        )
+      holder.bubble.background = ContextCompat.getDrawable(
+    holder.itemView.context,
+    if (isMe) R.drawable.bg_message_right
+    else R.drawable.bg_message_left
+)
+when (msg.priority) {
+    "URGENT" -> holder.bubble.setBackgroundColor(0xFFFFCDD2.toInt())
+    "HARMFUL" -> holder.bubble.setBackgroundColor(0xFFFFE0B2.toInt())
+}
+// ================= PRIORITY COLOR =================
+when (msg.priority) {
+    "URGENT" -> holder.bubble.setBackgroundColor(0x30FF4444)   // light red
+    "HARMFUL" -> holder.bubble.setBackgroundColor(0x30FFC107)  // amber
+}
+
+        // ================= PRIORITY COLOR =================
+when (msg.priority) {
+    "URGENT" -> holder.bubble.setBackgroundColor(0x30FF4444)   // light red
+    "HARMFUL" -> holder.bubble.setBackgroundColor(0x30FFC107)  // amber
+}
+
 
         holder.itemView.setOnClickListener {
             if (msg.type == "VOICE") {

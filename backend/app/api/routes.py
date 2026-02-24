@@ -100,6 +100,22 @@ async def send_text(
 def get_messages():
     return list_messages()
 
+@router.post("/mark-read/{user}/{contact}")
+def mark_read(user: str, contact: str):
+    for meta_file in STORAGE_META.glob("*.json"):
+        meta = json.loads(meta_file.read_text())
+
+        if (
+            meta.get("receiver") == user and
+            meta.get("sender") == contact and
+            not meta.get("is_read", False)
+        ):
+            meta["is_read"] = True
+            meta_file.write_text(json.dumps(meta, indent=2))
+
+    return {"status": "ok"}
+
+
 # -----------------------------
 # DEMO: Get Enhanced Audio
 # -----------------------------
@@ -134,7 +150,7 @@ def get_enhanced_audio(message_id: str):
 
 
 # -----------------------------
-# Decrypt → Enhance → Transcribe → Classify
+# Decrypt → Enhance → Transcribe → Classify (IDEMPOTENT)
 # -----------------------------
 @router.get("/transcribe/{message_id}")
 def transcribe_message(message_id: str):
@@ -144,32 +160,39 @@ def transcribe_message(message_id: str):
     if not encrypted_path.exists() or not meta_path.exists():
         return {"error": "Message not found"}
 
-    # 🔓 Step 1: Decrypt audio (controlled)
-    audio_bytes = load_and_decrypt_audio(
-        encrypted_path,
-        meta_path
-    )
+    meta = json.loads(meta_path.read_text())
 
-    # 🎧 Step 2: Speech enhancement (Objective 2)
+    # 🔒 If already processed → DO NOT recompute
+    if meta.get("transcription") and meta.get("priority"):
+        return {
+            "message_id": message_id,
+            "text": meta["transcription"],
+            "priority": meta["priority"]
+        }
+
+    # 🔓 Decrypt
+    audio_bytes = load_and_decrypt_audio(encrypted_path, meta_path)
+
+    # 🎧 Enhance
     enhanced_audio = enhance_audio(audio_bytes)
 
-    # 🧠 Step 3: Speech-to-text
+    # 🧠 STT
     transcription = speech_to_text(enhanced_audio)
 
-    # 🧠 Step 4: NLP classification
-    status = classify_message(transcription)
+    # 🧠 Classify
+    priority = classify_message(transcription)
 
-    # 🔄 Update metadata
-    meta = json.loads(meta_path.read_text())
-    meta["status"] = status
+    # 🔄 Persist
+    meta["transcription"] = transcription
+    meta["priority"] = priority
+
     meta_path.write_text(json.dumps(meta, indent=2))
 
     return {
         "message_id": message_id,
-        "transcription": transcription,
-        "status": status
+        "text": transcription,
+        "priority": priority
     }
-
 
 @router.get("/messages/{user}")
 def get_messages_for_user(user: str):

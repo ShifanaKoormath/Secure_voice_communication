@@ -261,29 +261,96 @@ class ChatActivity : AppCompatActivity() {
     }
 
     // =====================================================
+// TRANSCRIBE + ALERT
+// =====================================================
+private fun transcribeVoice(messageId: String) {
+    CoroutineScope(Dispatchers.IO).launch {
+        try {
+            val url = URL("$backendBase/transcribe/$messageId")
+            val response = url.readText()
+            val json = org.json.JSONObject(response)
+
+            val text = json.getString("text")
+            val priority = json.getString("priority")
+
+            runOnUiThread {
+                handlePriority(priority, text)
+            }
+
+        } catch (e: Exception) {
+            Log.e("TRANSCRIBE", "Failed", e)
+        }
+    }
+}
+
+private fun handlePriority(priority: String, text: String) {
+    when (priority) {
+        "URGENT" -> {
+            Toast.makeText(
+                this,
+                "⚠ URGENT: $text",
+                Toast.LENGTH_LONG
+            ).show()
+        }
+        "HARMFUL" -> {
+            Toast.makeText(
+                this,
+                "⚠ HARMFUL: $text",
+                Toast.LENGTH_LONG
+            ).show()
+        }
+    }
+}
+    // =====================================================
     // SEND TEXT
     // =====================================================
 
-    private fun sendText(sender: String, receiver: String, text: String) {
-        CoroutineScope(Dispatchers.IO).launch {
+private fun sendText(sender: String, receiver: String, text: String) {
+    CoroutineScope(Dispatchers.IO).launch {
+        try {
             val body =
                 "sender=${URLEncoder.encode(sender, "UTF-8")}" +
-                        "&receiver=${URLEncoder.encode(receiver, "UTF-8")}" +
-                        "&text=${URLEncoder.encode(text, "UTF-8")}"
+                "&receiver=${URLEncoder.encode(receiver, "UTF-8")}" +
+                "&text=${URLEncoder.encode(text, "UTF-8")}"
 
             val conn = URL("$backendBase/send-text").openConnection() as HttpURLConnection
             conn.requestMethod = "POST"
             conn.doOutput = true
+
+            // Send request
             conn.outputStream.use { it.write(body.toByteArray()) }
 
-            conn.inputStream.close()
+            // Read response ONCE
+            val response = conn.inputStream.bufferedReader().readText()
             conn.disconnect()
 
-            withContext(Dispatchers.Main) {
-                loadMessages(sender)
+            val json = org.json.JSONObject(response)
+
+            if (json.has("data")) {
+                val data = json.getJSONObject("data")
+                val priority = data.optString("priority", "SAFE")
+                val content = data.optString("content", "")
+
+                withContext(Dispatchers.Main) {
+                    // Show alert but DO NOT block message sending
+                    if (priority == "URGENT" || priority == "HARMFUL") {
+                        handlePriority(priority, content)
+                    }
+                }
             }
+
+        } catch (e: Exception) {
+            Log.e("SEND_TEXT", "Send failed", e)
+        }
+
+        // Always reload messages so message appears in chat
+        withContext(Dispatchers.Main) {
+            loadMessages(sender)
         }
     }
+}
+
+
 
     // =====================================================
     // LOAD MESSAGES (ORDERED)
@@ -315,19 +382,21 @@ private fun loadMessages(currentUser: String) {
                     (sender == contact && receiver == currentUser)
                 ) {
                     temp.add(
-                        ChatMessage(
+                      ChatMessage(
                             messageId = msg.getString("message_id"),
                             sender = sender,
                             content = msg.optString("content", ""),
                             type = msg.optString("type", "VOICE"),
-                            timestamp = msg.getString("timestamp")
+                            timestamp = msg.getString("timestamp"),
+                            priority = msg.optString("priority", "SAFE")
                         )
                     )
                 }
             }
 
             // 2️⃣ SORT ONCE (IMPORTANT)
-            temp.sortBy { it.timestamp }
+                temp.sortBy { it.timestamp }
+
 
             // 3️⃣ INSERT DATE SEPARATORS
             var lastDate: String? = null
@@ -337,13 +406,14 @@ private fun loadMessages(currentUser: String) {
 
                 if (date != lastDate) {
                     messages.add(
-                        ChatMessage(
-                            messageId = "date_$date",
-                            sender = "",
-                            content = formatDateLabel(date),
-                            type = "DATE",
-                            timestamp = msg.timestamp
-                        )
+                       ChatMessage(
+    messageId = "date_$date",
+    sender = "",
+    content = formatDateLabel(date),
+    type = "DATE",
+    timestamp = msg.timestamp,
+    priority = "SAFE"
+)
                     )
                     lastDate = date
                 }
@@ -362,46 +432,55 @@ private fun loadMessages(currentUser: String) {
     // UI
     // =====================================================
 
-    override fun onCreate(savedInstanceState: Bundle?) {
-        super.onCreate(savedInstanceState)
-        setContentView(R.layout.activity_chat)
+ override fun onCreate(savedInstanceState: Bundle?) {
+    super.onCreate(savedInstanceState)
+    setContentView(R.layout.activity_chat)
 
-        val currentUser =
-            getSharedPreferences("prefs", MODE_PRIVATE).getString("current_user", "") ?: return
-        val contact = intent.getStringExtra("contact") ?: return
+    val currentUser =
+        getSharedPreferences("prefs", MODE_PRIVATE).getString("current_user", "") ?: return
+    val contact = intent.getStringExtra("contact") ?: return
 
-        findViewById<TextView>(R.id.chatTitle).text = contact
+    findViewById<TextView>(R.id.chatTitle).text = contact
 
-        recycler = findViewById(R.id.messageList)
-        recycler.layoutManager = LinearLayoutManager(this).apply {
-            stackFromEnd = true
-        }
+    recycler = findViewById(R.id.messageList)
+    recycler.layoutManager = LinearLayoutManager(this).apply {
+        stackFromEnd = true
+    }
 
-        adapter = ChatAdapter(currentUser, messages) { msg ->
+    // 🔥 UPDATED ADAPTER INIT
+    adapter = ChatAdapter(
+        currentUser = currentUser,
+        messages = messages,
+        onVoiceClick = { msg ->
             if (msg.type == "VOICE") {
                 fetchAndPlayEnhancedAudio(msg.messageId)
+                transcribeVoice(msg.messageId)
             }
         }
+    )
 
-        recycler.adapter = adapter
+    recycler.adapter = adapter
 
-        loadMessages(currentUser)
+    loadMessages(currentUser)
+    markMessagesAsRead(currentUser, contact)
 
-        findViewById<ImageButton>(R.id.sendBtn).setOnClickListener {
-            val input = findViewById<EditText>(R.id.messageInput)
-            val text = input.text.toString().trim()
-            if (text.isNotEmpty()) {
-                input.setText("")
-                sendText(currentUser, contact, text)
-            }
-        }
+  
 
-        findViewById<ImageButton>(R.id.micBtn).setOnClickListener {
-            if (!isRecording) {
-                if (ensureMicPermission()) startRecording()
-            } else stopRecording()
+    findViewById<ImageButton>(R.id.sendBtn).setOnClickListener {
+        val input = findViewById<EditText>(R.id.messageInput)
+        val text = input.text.toString().trim()
+        if (text.isNotEmpty()) {
+            input.setText("")
+            sendText(currentUser, contact, text)
         }
     }
+
+    findViewById<ImageButton>(R.id.micBtn).setOnClickListener {
+        if (!isRecording) {
+            if (ensureMicPermission()) startRecording()
+        } else stopRecording()
+    }
+}
 
     override fun onRequestPermissionsResult(
         requestCode: Int,
@@ -416,6 +495,25 @@ private fun loadMessages(currentUser: String) {
             startRecording()
         }
     }
+
+
+private fun markMessagesAsRead(user: String, contact: String) {
+    CoroutineScope(Dispatchers.IO).launch {
+        try {
+            val url = URL("$backendBase/mark-read/$user/$contact")
+            val conn = url.openConnection() as HttpURLConnection
+            conn.requestMethod = "POST"
+            conn.doOutput = true
+            conn.outputStream.write(ByteArray(0))
+            conn.inputStream.close()
+            conn.disconnect()
+        } catch (e: Exception) {
+            e.printStackTrace()
+        }
+    }
+}
+
+
 
     private fun formatDateLabel(date: String): String {
     val today = java.time.LocalDate.now()

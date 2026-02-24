@@ -1,11 +1,4 @@
-
-README.md
-```
-
----
-
-# 🔐 Secure AI-Based Voice Communication System
-
+# 🔐 Secure AI-Based Voice Communication System  
 **Android Frontend + Python Backend**
 
 ---
@@ -14,37 +7,72 @@ README.md
 
 This project implements a **Secure AI-Based Voice Communication System** that demonstrates how voice messages can be:
 
-* securely transmitted
-* encrypted using modern cryptography
-* processed using AI models
-* analyzed for harmful or urgent content
+- securely transmitted  
+- encrypted using modern cryptography  
+- processed using AI models  
+- analyzed for urgency and harmful intent  
 
-The system is built as an **academic prototype** and is **demo-ready**, focusing on correctness, security concepts, and explainability rather than production deployment.
+The system is developed as an **academic prototype** and is **fully demo-ready**, emphasizing:
+
+- correctness  
+- secure design  
+- AI integration  
+- explainability  
+
+rather than large-scale production deployment.
+
+---
+
+## 🚀 Current Version
+
+**Version:** `v1.0-stable-demo`
+
+### ✔ Stable Features
+
+- End-to-end encrypted voice messaging (X25519 + AES-256-GCM)
+- Encrypted storage (no plaintext audio at rest)
+- Speech enhancement pipeline
+- Speech-to-text using Whisper
+- AI message classification (SAFE / URGENT / HARMFUL)
+- Priority persistence in metadata
+- Idempotent transcription (no recomputation)
+- Unread/read state tracking
+- Priority-aware chat sorting
+- Urgent / Harmful visual indicators
+- Secure backend processing
 
 ---
 
 ## 🧩 System Components
 
-### 1️⃣ Android Frontend
+### 📱 Android Frontend
 
-* WhatsApp-like chat interface
-* Text and voice message support
-* Voice recording using device microphone
-* Secure transmission of audio to backend
-* No encryption keys stored on device
-
-### 2️⃣ Python Backend
-
-* Secure key exchange using X25519
-* AES-256-GCM encryption for voice data
-* Encrypted storage (no plaintext audio at rest)
-* Speech-to-text using pretrained ASR (Whisper)
-* AI-based message classification
-* REST API using FastAPI
+- WhatsApp-style chat interface
+- Text and voice messaging
+- Voice recording using microphone
+- Secure upload of encrypted audio
+- AI priority alerts (Urgent / Harmful)
+- Unread message tracking
+- Priority-based chat ordering
+- No cryptographic secrets stored on device
 
 ---
 
-## 🏗️ High-Level Architecture
+### 🖥️ Python Backend
+
+- X25519 secure key exchange
+- AES-256-GCM voice encryption
+- Encrypted audio storage
+- Controlled decryption pipeline
+- Neural-assisted speech enhancement
+- Speech-to-Text (Whisper)
+- AI classification engine
+- Persistent message metadata
+- FastAPI REST architecture
+
+---
+
+## 🏗️ System Architecture
 
 ```
 Android App
@@ -53,7 +81,7 @@ Android App
 │
 ├── Voice Recording (.wav)
 │       ↓
-│   Secure Upload (HTTP)
+│   Secure Upload
 │       ↓
 │
 Backend Server
@@ -61,11 +89,12 @@ Backend Server
 ├── X25519 Key Exchange
 ├── AES-256-GCM Encryption
 ├── Encrypted Storage
-├── Decryption (controlled)
-├── Speech-to-Text (ASR)
+├── Controlled Decryption
+├── Speech Enhancement
+├── Speech-to-Text (Whisper)
 ├── AI Classification
 │
-└── SAFE / HARMFUL / URGENT
+└── SAFE / URGENT / HARMFUL
 ```
 
 ---
@@ -75,24 +104,26 @@ Backend Server
 ### Frontend
 
 | Component   | Technology        |
-| ----------- | ----------------- |
-| Platform    | Android           |
-| Language    | Kotlin            |
-| UI          | XML Layouts       |
-| Audio       | AudioRecord       |
-| Networking  | HttpURLConnection |
-| Concurrency | Kotlin Coroutines |
+|------------|------------------|
+| Platform   | Android           |
+| Language   | Kotlin            |
+| UI         | XML Layouts       |
+| Audio      | AudioRecord       |
+| Networking | HttpURLConnection |
+| Async      | Kotlin Coroutines |
+
+---
 
 ### Backend
 
 | Component          | Technology              |
-| ------------------ | ----------------------- |
-| Framework          | FastAPI                 |
-| Cryptography       | X25519, AES-256-GCM     |
-| Speech Recognition | Whisper (pretrained)    |
-| NLP                | BERT (pretrained)       |
-| Harm Detection     | CNN–LSTM inspired logic |
-| Language           | Python                  |
+|-------------------|--------------------------|
+| Framework         | FastAPI                  |
+| Cryptography      | X25519, AES-256-GCM      |
+| Speech Recognition| Whisper (pretrained)     |
+| NLP               | BERT (pretrained)        |
+| Classification    | Rule + Lightweight AI    |
+| Language          | Python                   |
 
 ---
 
@@ -103,83 +134,54 @@ Secure_AI_Based_Voice_Communication/
 │
 ├── backend/
 │   ├── app/
+│   ├── storage/ (auto-generated)
 │   ├── requirements.txt
 │   └── README.md
 │
-├── frontend/ (Android project root)
+├── frontend/ (Android)
 │   ├── app/
 │   ├── build.gradle
 │   └── README.md
 │
 ├── .gitignore
-└── README.md   ← (this file)
+└── README.md
 ```
 
-> Runtime data (`venv`, encrypted audio, keys) are intentionally excluded from version control.
+> Runtime data (`venv`, encrypted audio, keys) are excluded intentionally.
 
 ---
 
-## ⚙️ Setup Instructions (Complete System)
+## ⚙️ Setup Instructions
 
 ### 🔹 Prerequisites
 
-* Python 3.9+
-* Android Studio (Giraffe / Hedgehog or newer)
-* Android Emulator (recommended) or physical device
-* Internet connection (for first-time dependency installs)
+- Python 3.9+
+- Android Studio (Giraffe / Hedgehog or newer)
+- Android Emulator (recommended)
+- Internet connection (first install only)
 
 ---
-✅Clone the Repository
+
+## ▶️ Clone Repository
+
+```bash
 git clone https://github.com/ShifanaKoormath/Secure_voice_communication.git
+cd SecureVoiceChat
+```
 
-
-This will create a folder:
-
-SECUREVOICECHAT
-
+---
 
 ## ▶️ Backend Setup
 
-### Step 1 — Navigate to backend
-
 ```bash
-cd SecureVoiceChat\backend
-```
-
-### Step 2 — Create & activate virtual environment
-
-```bash
+cd backend
 python -m venv venv
-
-# Windows
-venv\Scripts\activate
-
-# Linux / macOS
-source venv/bin/activate
-```
-
-Make sure `(venv)` appears in the terminal.
-
----
-
-### Step 3 — Install dependencies
-
-```bash
+venv\Scripts\activate   # Windows
 pip install -r requirements.txt
-```
-
-
----
-
-### Step 4 — Run backend server
-
-For Android Emulator:
-
-```bash
 uvicorn app.main:app --host 0.0.0.0 --port 8000 --reload
 ```
 
-Backend will be available at:
+Backend:
 
 ```
 http://127.0.0.1:8000
@@ -188,144 +190,122 @@ http://127.0.0.1:8000/docs
 
 ---
 
-## ▶️ Frontend Setup (Android)
+## ▶️ Frontend Setup
 
-### Step 1 — Open project
+1. Open Android Studio  
+2. Open **frontend project folder**  
+3. Wait for Gradle sync  
+4. Run on emulator  
 
-1. Open Android Studio
-2. Select **Open**
-3. Choose the Android frontend project folder
-4. Wait for Gradle sync
-
----
-
-### Step 2 — Backend connectivity (IMPORTANT)
-
-For Android Emulator, the backend **must be accessed via**:
+**Backend URL (Emulator):**
 
 ```
 http://10.0.2.2:8000
 ```
 
-This is already configured in the frontend code.
+---
 
-> ❌ Do NOT use `localhost` or `127.0.0.1` inside Android
+## 🎤 Demo Flow
+
+### Login
+
+Use:
+
+| User | Password |
+|------|----------|
+| userA | 1234 |
+| userB | 1234 |
+| userC | 1234 |
+| userD | 1234 |
 
 ---
 
-### Step 3 — Run the app
+### Text Messaging
 
-1. Start Android Emulator
-2. Click **Run ▶**
-3. App launches
-
----
-
-## 🎤 Voice Recording Permissions
-
-* App requests **Microphone permission** at runtime
-* Permission is required for voice messaging
-* App safely handles permission denial (no crash)
+- Send message → appears instantly
+- Receiver sees unread indicator
+- Opening chat marks as read
+- Urgent/Harmful messages trigger alerts
 
 ---
 
-🧪 Demo Flow — Phase 1 (UI + Basic Messaging)
-🔹 Login & User Switching
+### Voice Messaging
 
-Open the app → Login screen appears
-
-Login as User A (userA / 1234)
-
-Chat list opens → shows User B as the contact
-
-🔹 Text Messaging
-
-Open chat with User B
-
-Type a message → tap Send
-
-Message appears on the right side (User A bubble)
-
-🔹 Switch User (Simulated Two-User Demo)
-
-Go back → return to Login screen
-
-Login as User B (userB / 1234)
-
-Open chat with User A
-
-Previously sent message appears on the left side (received bubble)
-
-What this demonstrates
-
-Two-user interaction in a single device (simulated clients)
-
-Chat UI with sender/receiver separation
-
-Message persistence within session
-
-Realistic messaging workflow for demo
-
----
-
-### 🔹 Voice Messaging
-
-1. Open a chat
-2. Tap 🎤 to start recording
-3. Speak
-4. Tap 🎤 again to stop
-5. Voice is securely uploaded to backend
-6. Backend encrypts and stores audio
-
-This demonstrates **secure voice transmission**.
+1. Tap 🎤 → Record
+2. Stop → Upload encrypted audio
+3. Tap message → Enhanced playback
+4. Automatic transcription + classification
+5. Priority saved in metadata
+6. Alert shown if URGENT / HARMFUL
 
 ---
 
 ## 🔐 Security Highlights
 
-* No plaintext audio stored on backend
-* AES keys derived via X25519
-* Encryption and decryption handled server-side
-* Android client holds no cryptographic secrets
-* Designed to demonstrate secure communication principles
+- No plaintext audio stored
+- AES keys derived via X25519
+- Controlled server-side decryption
+- Android stores no secret keys
+- Encrypted communication pipeline
+- Secure metadata persistence
 
 ---
 
-## 🚧 Academic Scope & Limitations
+## 📊 AI Classification
 
-* User authentication is simulated
-* No real-time calling (asynchronous messaging only)
-* AI models used in pretrained / prototype mode
-* Focus is on **secure integration**, not large-scale training
+| Priority | Description |
+|----------|-------------|
+| SAFE     | Normal message |
+| URGENT   | Emergency / immediate attention |
+| HARMFUL  | Threat / abusive content |
+
+Classification uses:
+
+- Rule-based detection
+- Keyword logic
+- Lightweight BERT signal
+
+---
+
+## 🚧 Limitations (Academic Scope)
+
+- Simulated authentication
+- No real-time streaming
+- Prototype AI models
+- Local storage (no database)
+- Not production-scaled
+
+Focus is on **secure system integration**.
 
 ---
 
 ## 🔮 Future Enhancements
 
-* Enhanced voice playback in frontend
-* Visual threat / urgency indicators
-* On-device inference
-* Real user authentication
-* Push notifications
-* Full model training
+- Real-time urgent alerts
+- Admin monitoring dashboard
+- Push notification simulation
+- Improved harmful detection
+- Secure key exchange UI
+- Deployment containerization
 
 ---
 
-## 📄 Notes for Evaluators
+## 📄 For Evaluators
 
-* This project is an **academic prototype**
-* Emphasis is on:
+This project demonstrates:
 
-  * security
-  * system design
-  * integration
-  * explainability
-* Runtime data and keys are intentionally excluded from Git
+- Secure communication design  
+- AI-assisted message intelligence  
+- Encryption + AI integration  
+- Persistent message state  
+- Explainable architecture  
+
+All runtime data and keys are excluded intentionally.
 
 ---
 
 ## 📜 License
 
-This project is intended **strictly for academic demonstration purposes**.
+For **academic and research demonstration only**.
 
 ---

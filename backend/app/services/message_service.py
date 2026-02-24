@@ -7,7 +7,8 @@ from pathlib import Path
 BASE_DIR = Path(__file__).resolve().parent.parent.parent
 STORAGE_AUDIO = BASE_DIR / "storage" / "encrypted_audio"
 STORAGE_META = BASE_DIR / "storage" / "metadata"
-
+STORAGE_AUDIO.mkdir(parents=True, exist_ok=True)
+STORAGE_META.mkdir(parents=True, exist_ok=True)
 
 def save_message(
     sender: str,
@@ -33,6 +34,9 @@ def save_message(
     "content": "",
     "timestamp": datetime.utcnow().isoformat(),
     "status": "DELIVERED",
+    "priority": "SAFE",
+    "transcription": "",       # 🔥 added
+    "is_read": False,   # 🔥 ADD THIS
     "aes_key": base64.b64encode(aes_key).decode()
 }
 
@@ -44,8 +48,13 @@ def save_message(
     return metadata
 
 
+from app.services.classify_service import classify_message
+
 def save_text_message(sender: str, receiver: str, text: str):
     message_id = str(uuid.uuid4())
+
+    # 🔍 Classify immediately
+    priority = classify_message(text)
 
     metadata = {
         "message_id": message_id,
@@ -54,7 +63,9 @@ def save_text_message(sender: str, receiver: str, text: str):
         "type": "TEXT",
         "content": text,
         "timestamp": datetime.utcnow().isoformat(),
-        "status": "DELIVERED"
+        "status": "DELIVERED",
+        "priority": priority,  # 🔥 NEW FIELD
+        "is_read": False
     }
 
     meta_path = STORAGE_META / f"{message_id}.json"
